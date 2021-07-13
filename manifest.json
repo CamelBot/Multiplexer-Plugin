@@ -1,39 +1,44 @@
 {
-    "name":"multiplexer",
-    "description":"Transport messages accross Discord servers",
-    "class":"main.js",
-    "commands":[
+    "name": "multiplexer",
+    "description": "Transport messages accross Discord servers",
+    "class": "main.js",
+    "commands": [
         {
-            "name":"multihost",
-            "description":"Turns the current channel into a host channel.",
-            "class":"main.js",
-            "method":"multihost",
-            "source":[
-                "discord",
-                "minecraft"
+            "name": "multihost",
+            "description": "Turns the current channel into a host channel.",
+            "class": "main.js",
+            "method": "multihost",
+            "source": [
+                "discord"
             ],
-            "options":[{
-                "name": "channel",
-                "type": "CHANNEL",
-                "description": "Channel to multihost",
-                "required": false
-            }]
+            "options": []
         },
         {
-            "name":"multileave",
-            "description":"Stops listening or hosting a channel.",
-            "class":"main.js",
-            "method":"multihost",
-            "source":[
-                "discord",
-                "minecraft"
+            "name": "multijoin",
+            "description": "Join a hosting channel from across Discord.",
+            "class": "main.js",
+            "method": "multijoin",
+            "source": [
+                "discord"
             ],
-            "options":[{
-                "name": "channel",
-                "type": "CHANNEL",
-                "description": "Channel to multihost",
-                "required": false
-            }]
+            "options": [
+                {
+                    "name": "channel",
+                    "type": "STRING",
+                    "description": "ID of channel to join",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "multileave",
+            "description": "Stops listening or hosting a channel.",
+            "class": "main.js",
+            "method": "multileave",
+            "source": [
+                "discord"
+            ],
+            "options": []
         }
     ]
 }
