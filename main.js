@@ -11,7 +11,6 @@ module.exports = class plugin extends EventEmitter {
         camellib = parameters.camellib;
         this.multiplexedMessages = [];
         this.multihosts = multihosts;
-        console.log(this.multihosts);
         camellib.on('pluginEnabled', (guildid, plugname) => {
             if (plugname != 'multiplexer') return;
             camellib.database.get(guildid)['multiplexer'] = {
@@ -51,6 +50,14 @@ module.exports = class plugin extends EventEmitter {
                     return;
                 }
                 if (buttonJson.command == 'multijoin') {
+                    if (!interaction.member.permissions.has('ADMINISTRATOR')) {
+                        let toSend = new Discord.MessageEmbed()
+                            .setColor('#FF0000')
+                            .setTitle('Error')
+                            .addField('Permission', 'You do not have administrator permission to host channels here');
+                        interaction.reply({ embeds: [toSend], ephemeral: true });
+                        return;
+                    }
                     if (buttonJson.allow) {
                         camellib.database.get(interaction.guild.id).multiplexer.host.forEach(leHost => {
                             if (leHost.channel == interaction.channel.id) {
