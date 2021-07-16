@@ -12,7 +12,7 @@ module.exports = class host extends EventEmitter {
         this.channel = client.channels.cache.get(channelid);
         this.destroyed = false;
         this.multiplexedMessages = multiplexedMessages;
-        client.on('message', message => {
+        client.on('messageCreate', message => {
             if (this.destroyed) return;
             if (message.channel != this.channel.id) return;
             if (message.content.length < 1) return;

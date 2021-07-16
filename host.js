@@ -23,7 +23,7 @@ module.exports = class host extends EventEmitter {
             this.createClient(element);
         });
 
-        client.on('message', async message => {
+        client.on('messageCreate', async message => {
             this.discordMessage(message);
         });
     }
@@ -51,7 +51,7 @@ module.exports = class host extends EventEmitter {
         let theClient = new clientJs(this.client, channelid, this.multiplexedMessages);
         clients.set(channelid, theClient);
         this.clients.set(channelid, theClient);
-        theClient.on('message', message => {
+        theClient.on('messageCreate', message => {
             if (this.destroyed) return;
             this.clientMessage(message);
         });
