@@ -13,6 +13,7 @@ module.exports = class host extends EventEmitter {
     constructor(manifest, client, multiplexedMessages) {
         super();
         this.channel = client.channels.cache.get(manifest.channel);
+        console.log('Creating new multihost on ' + this.channel.id);
         this.clients = new Map();
         clients = this.clients;
         this.client = client;
@@ -51,7 +52,7 @@ module.exports = class host extends EventEmitter {
         let theClient = new clientJs(this.client, channelid, this.multiplexedMessages);
         clients.set(channelid, theClient);
         this.clients.set(channelid, theClient);
-        theClient.on('messageCreate', message => {
+        theClient.on('message', message => {
             if (this.destroyed) return;
             this.clientMessage(message);
         });

@@ -10,6 +10,7 @@ module.exports = class host extends EventEmitter {
     constructor(client, channelid, multiplexedMessages) {
         super();
         this.channel = client.channels.cache.get(channelid);
+        console.log('Client instantiated on channel ' + this.channel.id);
         this.destroyed = false;
         this.multiplexedMessages = multiplexedMessages;
         client.on('messageCreate', message => {
