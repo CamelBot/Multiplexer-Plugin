@@ -30,7 +30,7 @@ module.exports = class plugin extends EventEmitter {
             camellib.database.forEach(guild => {
                 if (Object.prototype.hasOwnProperty.call(guild, 'multiplexer')) {
                     guild.multiplexer.host.forEach(element => {
-                        multihosts.push(new host(element, camellib.client, this.multiplexedMessages));
+                        multihosts.push(new host(element, camellib, this.multiplexedMessages));
                     });
                 }
             });
@@ -142,7 +142,7 @@ module.exports = class plugin extends EventEmitter {
         multihosts.push(new host({
             'channel': commandRunner.interaction.channel.id,
             'clients': []
-        }, camellib.client, commandRunner.interaction.guild.id, this.multiplexedMessages));
+        }, camellib, commandRunner.interaction.guild.id, this.multiplexedMessages));
         // Send success message with instructions on joining
         let toSend = new Discord.MessageEmbed()
             .setColor('#008000')

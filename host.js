@@ -3,29 +3,43 @@ const { EventEmitter } = require('events');
 
 /**@type {Map} */
 let clients;
+
 module.exports = class host extends EventEmitter {
     /**
      * 
      * @param {Object} manifest 
-     * @param {import('discord.js').Client} client 
+     * @param {import('../../camelLib')} camellib 
      * @param {Array<String>} multiplexedMessages
      */
-    constructor(manifest, client, multiplexedMessages) {
+    constructor(manifest, camellib, multiplexedMessages) {
         super();
-        this.channel = client.channels.cache.get(manifest.channel);
+        this.channel = camellib.client.channels.cache.get(manifest.channel);
         console.log('Creating new multihost on ' + this.channel.id);
         this.clients = new Map();
         clients = this.clients;
-        this.client = client;
+        this.client = camellib.client;
         this.destroyed = false;
         this.manifest = manifest;
+        this.camellib = camellib;
         this.multiplexedMessages = multiplexedMessages;
         manifest.clients.forEach(element => {
             this.createClient(element);
         });
 
-        client.on('messageCreate', async message => {
+        camellib.client.on('messageCreate', async message => {
             this.discordMessage(message);
+        });
+        camellib.on('minecraftChatSent', (message, sender, channelid) => {
+            if (channelid != this.channel.id) return;
+            this.clients.forEach(cl => {
+                cl.sendMessage(this.cleanMessage(message), sender);
+            });
+        });
+        camellib.on('minecraftEventSent', (message, channelid) => {
+            if (channelid != this.channel.id) return;
+            this.clients.forEach(cl => {
+                cl.sendMessage(this.cleanMessage('**' + message + '**'), camellib.client.user.username);
+            });
         });
     }
 
@@ -43,38 +57,42 @@ module.exports = class host extends EventEmitter {
     multiplexedMessages;
     destroyed;
     manifest;
-
+    /**@type {import('../../camelLib')} */
+    camellib;
     /**
      * 
      * @param {String} channelid 
      */
     createClient(channelid) {
-        let theClient = new clientJs(this.client, channelid, this.multiplexedMessages);
+        let theClient = new clientJs(this.camellib, channelid, this.multiplexedMessages);
         clients.set(channelid, theClient);
         this.clients.set(channelid, theClient);
         theClient.on('message', message => {
             if (this.destroyed) return;
-            this.clientMessage(message);
+            this.clientMessage(message.content, message.author.username, message.channel.id);
+            this.camellib.emit('multiplexerMessage', message.content, message.author.username, this.channel.id);
+        });
+        theClient.on('extmessage', (message, sender, channelId) => {
+            if (this.destroyed) return;
+            this.clientMessage(message, sender, channelId);
         });
     }
 
-    /**@param {import('discord.js').Message} message */
-    clientMessage(message) {
-        if (this.lastSender == message.author.username) {
-            this.channel.send(this.cleanMessage(message.content)).then(msg => {
-                this.multiplexedMessages.push(msg.id);
-                if (this.multiplexedMessages.length > 500) {
-                    this.multiplexedMessages.shift();
-                }
+
+    clientMessage(message, sender, sourceChannelId) {
+        if (this.lastSender == sender) {
+            this.channel.send(this.cleanMessage(message));
+            this.clients.forEach(cl => {
+                if (cl.channel.id == sourceChannelId) return;
+                cl.sendMessage(this.cleanMessage(message), sender);
             });
         } else {
-            this.channel.send('__**' + message.author.username + '**__\n' + this.cleanMessage(message.content)).then(msg => {
-                this.multiplexedMessages.push(msg.id);
-                if (this.multiplexedMessages.length > 500) {
-                    this.multiplexedMessages.shift();
-                }
+            this.channel.send('__**' + sender + '**__\n' + this.cleanMessage(message));
+            this.clients.forEach(cl => {
+                if (cl.channel.id == sourceChannelId) return;
+                cl.sendMessage(this.cleanMessage(message), sender);
             });
-            this.lastSender = message.author.username;
+            this.lastSender = sender;
         }
     }
 
@@ -83,21 +101,12 @@ module.exports = class host extends EventEmitter {
         if (this.destroyed) return;
         if (message.channel.id != this.channel.id) return;
         if (message.content.length < 1) return;
-        if (message.author.id == this.client.user.id) {
-            let that = this;
-            setTimeout(function () {
-                if (that.multiplexedMessages.includes(message.id)) return;
-                clients.forEach(cl => {
-                    cl.sendMessage(that.cleanMessage(message.content), message.author.username);
-                });
-            }, 100);
-        } else {
-            if (this.multiplexedMessages.includes(message.id)) return;
-            this.clients.forEach(cl => {
-                cl.sendMessage(this.cleanMessage(message.content), message.author.username);
-            });
-            this.lastSender = undefined;
-        }
+        if (message.author.id == this.client.user.id) return;
+        this.clients.forEach(cl => {
+            cl.sendMessage(this.cleanMessage(message.content), message.author.username);
+        });
+        this.lastSender = undefined;
+
     }
 
     cleanMessage(message) {

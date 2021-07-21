@@ -5,30 +5,35 @@ module.exports = class host extends EventEmitter {
     /**
      * 
      * @param {Object} manifest 
-     * @param {import('discord.js').Client} client 
+     * @param {import('../../camelLib')} camellib 
      */
-    constructor(client, channelid, multiplexedMessages) {
+    constructor(camellib, channelid, multiplexedMessages) {
         super();
-        this.channel = client.channels.cache.get(channelid);
+        this.channel = camellib.client.channels.cache.get(channelid);
         console.log('Client instantiated on channel ' + this.channel.id);
         this.destroyed = false;
         this.multiplexedMessages = multiplexedMessages;
-        client.on('messageCreate', message => {
+        this.camellib = camellib;
+        camellib.client.on('messageCreate', message => {
             if (this.destroyed) return;
             if (message.channel != this.channel.id) return;
             if (message.content.length < 1) return;
-            let that = this;
-            if (message.author.id == client.user.id) {
-                setTimeout(function () {
-                    if (multiplexedMessages.includes(message.id)) return;
-                    that.emit('message', (message));
-                }, 100);
-            } else {
-                this.emit('message', (message));
-                this.lastSender = undefined;
+            if (message.author.id == camellib.client.user.id) {
+                //this.lastSender = undefined;
+                return;
             }
+            this.emit('message', (message));
+            this.lastSender = undefined;
 
 
+        });
+        camellib.on('minecraftChatSent', (message, sender, channelid) => {
+            if (channelid != this.channel.id) return;
+            this.emit('extmessage', (message, sender, this.channel.id));
+        });
+        camellib.on('minecraftEventSent', (message, channelid) => {
+            if (channelid != this.channel.id) return;
+            this.emit('extmessage', (message, undefined, this.channel.id));
         });
     }
 
@@ -39,6 +44,7 @@ module.exports = class host extends EventEmitter {
     /**@type {Array<String>} */
     multiplexedMessages;
     destroyed;
+    camellib;
     /**
      * 
      * @param {String} message 
@@ -46,6 +52,7 @@ module.exports = class host extends EventEmitter {
      */
     sendMessage(message, sender) {
         if (this.destroyed) return;
+        this.camellib.emit('multiplexerMessage', message, sender, this.channel.id);
         if (this.lastSender == sender) {
             this.channel.send(message).then(msg => {
                 this.multiplexedMessages.push(msg.id);
