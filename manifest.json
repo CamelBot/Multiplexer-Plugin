@@ -1,5 +1,5 @@
 {
-    "name": "multiplexer",
+    "name": "Multiplexer",
     "description": "Transport messages accross Discord servers",
     "class": "main.js",
     "commands": [
