@@ -10,6 +10,7 @@ module.exports = class host extends EventEmitter {
     constructor(camellib, channelid, multiplexedMessages) {
         super();
         this.channel = camellib.client.channels.cache.get(channelid);
+
         console.log('Client instantiated on channel ' + this.channel.id);
         this.destroyed = false;
         this.multiplexedMessages = multiplexedMessages;
